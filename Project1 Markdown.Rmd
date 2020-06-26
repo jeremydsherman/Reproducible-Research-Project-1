@@ -1,0 +1,124 @@
+---
+title: "Week1 Project for Reproducible Research"
+author: "Jeremy"
+date: "6/26/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1
+
+Here is my code for reading the dataset into R. 
+
+```{r}
+data <- read.csv("activity.csv", header = TRUE)
+```
+
+## Question 2
+
+Here is a histogram of the total number of steps taken for each day.
+First I had to convert the days into a factor variable.
+Then I used the tapply function to sum the number of steps by day.
+Then I plotted these results as a histogram.
+
+```{r}
+data$date <- as.factor(data$date)
+stepsbyday <- tapply(data$steps, data$date, sum)
+hist(stepsbyday)
+```
+
+## Question 3
+
+The mean and median number of steps taken per day can be computed as:
+
+```{r}
+mean(stepsbyday, na.rm = TRUE)
+median(stepsbyday, na.rm = TRUE)
+```
+
+## Question 4
+
+To make a time series plot of the number of steps taken I use the same steps as in question two, instead dividing the data set by interval, and using the mean function in tapply instead of the sum function.
+
+Then I plotted the results as a line graph.
+
+```{r}
+data$interval <- as.factor(data$interval)
+stepsbytime <- tapply(data$steps, data$interval, mean, na.rm = TRUE)
+plot(data$interval[1:288], stepsbytime, type = "l", lty = 1)
+lines(data$interval[1:288], stepsbytime, type = "l", lty = 1)
+```
+
+## Question 5
+
+Then we can use our stepsbytime vector to find the interval with the highest number of steps, and at what time that took place.
+
+```{r}
+max(stepsbytime)
+which(stepsbytime == max(stepsbytime))
+```
+*Note that the time of day is 8:35 am, and 104 means this is the 104th interval in the day.*
+
+## Question 6
+
+In order to impute the missing data, I will use the k-Nearest neighbor imputation using the package VIM and function kNN.
+
+```{r}
+library(VIM)
+impdata <- kNN(data = data)
+```
+
+
+## Question 7
+
+Then we can remake the histogram of total number of steps taken per day with the imputed values.
+
+```{r}
+impdata$date <- as.factor(impdata$date)
+stepsbyday <- tapply(impdata$steps, impdata$date, sum)
+hist(stepsbyday)
+```
+
+## Question 8
+
+We can also compare the plot for average number of steps taken per time of day for weekdays versus weekends. First we need to load packages lubridate and dplyr. Then we can convert the date column into a usable format which will tell us what day of the week it is. 
+
+```{r}
+library(lubridate)
+library(dplyr)
+data$date <- ymd(data$date)
+day <- weekdays(data$date)
+datadays <- cbind(data, day)
+        weekdaydata <- filter(datadays, day == "Monday" |
+                                      day == "Tuesday" |
+                                      day == "Wednesday"|
+                                      day == "Thursday"|
+                                      day == "Friday")
+        weekenddata <- filter(datadays, day == "Saturday" |
+                                      day == "Sunday")
+par(mfrow = c(1,2))
+##Plot weekdays
+        weekdaydata$interval <- as.factor(weekdaydata$interval)
+        daystepsbytime <- tapply(weekdaydata$steps, 
+                              weekdaydata$interval, 
+                              mean, na.rm = TRUE)
+        plot(weekdaydata$interval[1:288], daystepsbytime, type = "l", lty = 1,
+             main = "Weekdays")
+        lines(weekdaydata$interval[1:288], daystepsbytime, type = "l", lty = 1) 
+##Plot weekends
+        weekenddata$interval <- as.factor(weekenddata$interval)
+        endstepsbytime <- tapply(weekenddata$steps, 
+                              weekenddata$interval, 
+                              mean, na.rm = TRUE)
+        plot(weekenddata$interval[1:288], endstepsbytime, type = "l", lty = 1,
+             main = "Weekends")
+        lines(weekenddata$interval[1:288], endstepsbytime, type = "l", lty = 1) 
+```
+
+And per **Question 9**, all the R code needed to reproduce the results in the report are included above! 
+        
+        
+        
